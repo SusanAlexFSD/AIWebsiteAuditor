@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import type { AuditResponse } from "@/types/audit";
 
 export default function WebsiteAuditForm() {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+    const [result, setResult] =
+    useState<AuditResponse | null>(null);
 
   const handleSubmit = async (
     e: React.FormEvent

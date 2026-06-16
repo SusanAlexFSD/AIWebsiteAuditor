@@ -25,22 +25,32 @@ export async function crawlWebsite(url: string) {
 
     const title = await page.title();
 
-   const metaDescription = await page.evaluate(() => {
-  const meta = document.querySelector(
-    'meta[name="description"]'
-  );
+    const pageUrl = page.url();
 
-  return meta?.getAttribute("content") ?? null;
-});
+    const metaDescription = await page.evaluate(() => {
+      const meta = document.querySelector(
+        'meta[name="description"]'
+      );
+
+      return meta?.getAttribute("content") ?? null;
+    });
 
     const links = await page.locator("a").count();
+
     const images = await page.locator("img").count();
+
+    const h1Count = await page.locator("h1").count();
+
+    const h2Count = await page.locator("h2").count();
 
     return {
       title,
+      pageUrl,
       metaDescription,
       links,
       images,
+      h1Count,
+      h2Count,
     };
   } finally {
     await browser.close();
