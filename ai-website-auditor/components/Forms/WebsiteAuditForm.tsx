@@ -65,13 +65,11 @@ export default function WebsiteAuditForm() {
 
       {result && !result.success && (
         <div className="mt-6 border border-red-300 rounded-xl p-4">
-          <p className="font-semibold">
+          <p className="font-semibold text-red-600">
             Error
           </p>
 
-          <p>
-            {result.message}
-          </p>
+          <p>{result.message}</p>
         </div>
       )}
 
@@ -86,7 +84,7 @@ export default function WebsiteAuditForm() {
           <div className="space-y-3">
             <p>
               <strong>Title:</strong>{" "}
-              {result.data.title}
+              {result.data.title || "No title found"}
             </p>
 
             <p>
@@ -97,12 +95,12 @@ export default function WebsiteAuditForm() {
 
             <p>
               <strong>Links:</strong>{" "}
-              {result.data.links}
+              {result.data.links ?? 0}
             </p>
 
             <p>
               <strong>Images:</strong>{" "}
-              {result.data.images}
+              {result.data.images ?? 0}
             </p>
           </div>
         </div>
