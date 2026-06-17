@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { AuditResponse } from "@/types/audit";
+import { generatePdfReport } from "@/services/pdf/generatePdf";
+import MetricCard from "@/components/UI/MetricCard";
 
 export default function WebsiteAuditForm() {
   const [url, setUrl] = useState("");
@@ -140,6 +142,41 @@ export default function WebsiteAuditForm() {
             </div>
           </div>
 
+
+        <div className="border rounded-xl p-6 mb-6 text-center">
+        <p className="text-6xl font-bold">
+            {result.data.overallScore}
+        </p>
+
+        <p className="font-semibold mt-2">
+            Overall Score
+        </p>
+        </div>
+
+
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <MetricCard
+                title="SEO"
+                score={
+                result.data.seoAnalysis.score
+                }
+            />
+
+            <MetricCard
+                title="Content"
+                score={
+                result.data.contentAnalysis.score
+                }
+            />
+
+            <MetricCard
+                title="Technical"
+                score={
+                result.data.technicalAnalysis.score
+                }
+            />
+            </div>
+
            {/* RECOMMENDATIONS DATA */}
 
           <div className="border rounded-xl p-6 mb-6">
@@ -158,6 +195,16 @@ export default function WebsiteAuditForm() {
             )}
             </ul>
             </div>
+
+            <button
+            type="button"
+            onClick={() =>
+                generatePdfReport(result.data)
+            }
+            className="bg-blue-600 text-white rounded-lg p-4 mt-6 w-full"
+            >
+            Download PDF Report
+            </button>
 
           {/* WEBSITE DATA */}
 

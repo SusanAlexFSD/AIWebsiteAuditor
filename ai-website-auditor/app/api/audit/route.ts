@@ -3,7 +3,9 @@ import { validateUrl } from "@/lib/validateUrl";
 import { crawlWebsite } from "@/services/crawler/crawlWebsite";
 import { analyseSeo } from "@/services/seo/analyseSeo";
 import { generateRecommendations } from "@/services/seo/generateRecommendations";
-
+import { analyseContent } from "@/services/content/analyseContent";
+import { analyseTechnical } from "@/services/technical/analyseTechnical";
+import { calculateOverallScore } from "@/services/scoring/calculateOverallScore";
 
 export async function POST(request: Request) {
   try {
@@ -34,35 +36,56 @@ export async function POST(request: Request) {
     const auditData = await crawlWebsite(url);
 
     if ("error" in auditData) {
-  return NextResponse.json(
-    {
-      success: false,
-      message: auditData.error,
-    },
-    { status: 400 }
-  );
-}
+      return NextResponse.json(
+        {
+          success: false,
+          message: auditData.error,
+        },
+        { status: 400 }
+      );
+    }
 
     const seoAnalysis = analyseSeo({
-        title: auditData.title,
-        metaDescription:
-            auditData.metaDescription,
-        h1Count: auditData.h1Count,
-        });
+      title: auditData.title,
+      metaDescription: auditData.metaDescription,
+      h1Count: auditData.h1Count,
+    });
 
-        const recommendations =
-  generateRecommendations(
-    seoAnalysis.checks
-  );
+    const contentAnalysis = analyseContent({
+      h1Count: auditData.h1Count,
+      h2Count: auditData.h2Count,
+      images: auditData.images,
+    });
 
- return NextResponse.json({
-  success: true,
-  data: {
-    ...auditData,
-    seoAnalysis,
-    recommendations,
-  },
-});
+    const technicalAnalysis =
+      analyseTechnical({
+        links: auditData.links,
+        images: auditData.images,
+      });
+
+      const overallScore =
+    calculateOverallScore({
+        seo: seoAnalysis.score,
+        content: contentAnalysis.score,
+        technical: technicalAnalysis.score,
+    });
+
+    const recommendations =
+      generateRecommendations(
+        seoAnalysis.checks
+      );
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...auditData,
+        seoAnalysis,
+        contentAnalysis,
+        technicalAnalysis,
+        overallScore,
+        recommendations,
+        },
+            });
   } catch (error) {
     console.error("API ERROR:", error);
 
