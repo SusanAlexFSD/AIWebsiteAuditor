@@ -9,6 +9,10 @@ import { calculateOverallScore } from "@/services/scoring/calculateOverallScore"
 import { generateAiRecommendations } from "@/services/ai/generateAiRecommendations";
 
 export async function POST(request: Request) {
+    console.log(
+  "OPENAI ENV:",
+  process.env.OPENAI_API_KEY
+);
   try {
     const body = await request.json();
 
