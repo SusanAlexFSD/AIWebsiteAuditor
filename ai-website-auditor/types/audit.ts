@@ -6,11 +6,18 @@ export interface AuditData {
   images: number;
   h1Count: number;
   h2Count: number;
+  screenshot: string;
+  recommendations: string[];
 
-   performance?: number;
-  accessibility?: number;
-  seo?: number;
-  bestPractices?: number;
+  seoAnalysis: {
+    score: number;
+
+    checks: {
+      hasTitle: boolean;
+      hasMetaDescription: boolean;
+      hasH1: boolean;
+    };
+  };
 }
 
 export interface AuditResponse {
@@ -18,4 +25,3 @@ export interface AuditResponse {
   data?: AuditData;
   message?: string;
 }
-

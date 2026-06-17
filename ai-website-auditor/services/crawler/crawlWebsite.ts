@@ -16,6 +16,10 @@ export async function crawlWebsite(url: string) {
         waitUntil: "domcontentloaded",
         timeout: 10000,
       });
+      await page.screenshot({
+        path: "./public/latest-audit.png",
+        fullPage: true,
+        });
     } catch (error) {
       return {
         error: "Unable to access website",
@@ -51,6 +55,7 @@ export async function crawlWebsite(url: string) {
       images,
       h1Count,
       h2Count,
+      screenshot: "/latest-audit.png",
     };
   } finally {
     await browser.close();
