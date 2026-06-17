@@ -32,6 +32,8 @@ export interface AuditData {
   overallScore: number;
 
   recommendations: string[];
+
+  aiRecommendations: string;
 }
 
 export interface AuditResponse {

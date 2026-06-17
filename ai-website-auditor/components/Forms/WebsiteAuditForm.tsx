@@ -16,6 +16,8 @@ export default function WebsiteAuditForm() {
   ) => {
     e.preventDefault();
 
+    console.log("URL:", url);
+
     setIsLoading(true);
 
     try {
@@ -32,8 +34,8 @@ export default function WebsiteAuditForm() {
       setResult(data);
 
       console.log(
-  JSON.stringify(data, null, 2)
-);
+        JSON.stringify(data, null, 2)
+      );
     } catch (error) {
       console.error(error);
 
@@ -58,7 +60,9 @@ export default function WebsiteAuditForm() {
         type="url"
         placeholder="https://yourwebsite.com"
         value={url}
-        onChange={(e) => setUrl(e.target.value)}
+        onChange={(e) =>
+          setUrl(e.target.value)
+        }
         className="border rounded-lg p-4"
       />
 
@@ -67,10 +71,10 @@ export default function WebsiteAuditForm() {
         disabled={isLoading}
         className="bg-black text-white rounded-lg p-4 hover:opacity-90"
       >
-        {isLoading ? "Scanning..." : "Scan Website"}
+        {isLoading
+          ? "Scanning..."
+          : "Scan Website"}
       </button>
-
-      {/* Error State */}
 
       {result && !result.success && (
         <div className="mt-6 border border-red-300 rounded-xl p-4">
@@ -82,15 +86,11 @@ export default function WebsiteAuditForm() {
         </div>
       )}
 
-      {/* Success State */}
-
       {result?.success && result?.data && (
         <div className="mt-8 w-full border rounded-xl p-6">
           <h2 className="text-2xl font-bold mb-6">
             Website Analysis
           </h2>
-
-          {/* SEO SCORE CARD */}
 
           <div className="border rounded-xl p-6 mb-6 text-center">
             <p
@@ -106,9 +106,9 @@ export default function WebsiteAuditForm() {
             </p>
 
             <img
-            src={result.data.screenshot}
-            alt="Website Screenshot"
-            className="rounded-xl border mb-6"
+              src={result.data.screenshot}
+              alt="Website Screenshot"
+              className="rounded-xl border mb-6"
             />
 
             <p className="text-lg font-semibold mb-6">
@@ -117,15 +117,16 @@ export default function WebsiteAuditForm() {
 
             <div className="space-y-2 text-left">
               <p>
-                {result.data.seoAnalysis.checks
-                  .hasTitle
+                {result.data.seoAnalysis
+                  .checks.hasTitle
                   ? "✅"
                   : "❌"}{" "}
                 Title Tag
               </p>
 
               <p>
-                {result.data.seoAnalysis.checks
+                {result.data.seoAnalysis
+                  .checks
                   .hasMetaDescription
                   ? "✅"
                   : "❌"}{" "}
@@ -133,8 +134,8 @@ export default function WebsiteAuditForm() {
               </p>
 
               <p>
-                {result.data.seoAnalysis.checks
-                  .hasH1
+                {result.data.seoAnalysis
+                  .checks.hasH1
                   ? "✅"
                   : "❌"}{" "}
                 H1 Tag
@@ -142,73 +143,87 @@ export default function WebsiteAuditForm() {
             </div>
           </div>
 
+          <div className="border rounded-xl p-6 mb-6 text-center">
+            <p className="text-6xl font-bold">
+              {result.data.overallScore}
+            </p>
 
-        <div className="border rounded-xl p-6 mb-6 text-center">
-        <p className="text-6xl font-bold">
-            {result.data.overallScore}
-        </p>
-
-        <p className="font-semibold mt-2">
-            Overall Score
-        </p>
-        </div>
-
+            <p className="font-semibold mt-2">
+              Overall Score
+            </p>
+          </div>
 
           <div className="grid grid-cols-3 gap-4 mb-6">
             <MetricCard
-                title="SEO"
-                score={
-                result.data.seoAnalysis.score
-                }
+              title="SEO"
+              score={
+                result.data.seoAnalysis
+                  .score
+              }
             />
 
             <MetricCard
-                title="Content"
-                score={
-                result.data.contentAnalysis.score
-                }
+              title="Content"
+              score={
+                result.data.contentAnalysis
+                  .score
+              }
             />
 
             <MetricCard
-                title="Technical"
-                score={
-                result.data.technicalAnalysis.score
-                }
+              title="Technical"
+              score={
+                result.data
+                  .technicalAnalysis.score
+              }
             />
-            </div>
+          </div>
 
-           {/* RECOMMENDATIONS DATA */}
+
+          {/* AI ANALYSIS */}
+
+        <div className="border rounded-xl p-6 mb-6">
+        <h3 className="font-bold text-lg mb-4">
+            AI Analysis
+        </h3>
+
+        <p className="whitespace-pre-wrap">
+            {result.data.aiRecommendations}
+        </p>
+        </div>
 
           <div className="border rounded-xl p-6 mb-6">
             <h3 className="font-bold text-lg mb-4">
-                Recommendations
+              Recommendations
             </h3>
 
             <ul className="space-y-2">
-                {result.data.recommendations &&
-            result.data.recommendations.map(
-                (recommendation, index) => (
-                <li key={index}>
+              {result.data.recommendations?.map(
+                (
+                  recommendation,
+                  index
+                ) => (
+                  <li key={index}>
                     • {recommendation}
-                </li>
+                  </li>
                 )
-            )}
+              )}
             </ul>
-            </div>
+          </div>
 
-            <button
+          <button
             type="button"
             onClick={() =>
-                generatePdfReport(result.data)
+              generatePdfReport(
+                result.data
+              )
             }
             className="bg-blue-600 text-white rounded-lg p-4 mt-6 w-full"
-            >
+          >
             Download PDF Report
-            </button>
+          </button>
 
-          {/* WEBSITE DATA */}
-
-          <div className="space-y-3">
+          <div className="space-y-3 mt-6">
             <p>
               <strong>Title:</strong>{" "}
               {result.data.title ||
@@ -221,8 +236,11 @@ export default function WebsiteAuditForm() {
             </p>
 
             <p>
-              <strong>Meta Description:</strong>{" "}
-              {result.data.metaDescription ||
+              <strong>
+                Meta Description:
+              </strong>{" "}
+              {result.data
+                .metaDescription ||
                 "No description found"}
             </p>
 

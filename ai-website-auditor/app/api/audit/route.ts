@@ -6,6 +6,7 @@ import { generateRecommendations } from "@/services/seo/generateRecommendations"
 import { analyseContent } from "@/services/content/analyseContent";
 import { analyseTechnical } from "@/services/technical/analyseTechnical";
 import { calculateOverallScore } from "@/services/scoring/calculateOverallScore";
+import { generateAiRecommendations } from "@/services/ai/generateAiRecommendations";
 
 export async function POST(request: Request) {
   try {
@@ -35,15 +36,18 @@ export async function POST(request: Request) {
 
     const auditData = await crawlWebsite(url);
 
-    if ("error" in auditData) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: auditData.error,
-        },
-        { status: 400 }
-      );
-    }
+   if ("error" in auditData) {
+  console.error(auditData.details);
+
+  return NextResponse.json(
+    {
+      success: false,
+      message: auditData.error,
+      details: auditData.details,
+    },
+    { status: 400 }
+  );
+}
 
     const seoAnalysis = analyseSeo({
       title: auditData.title,
@@ -63,17 +67,34 @@ export async function POST(request: Request) {
         images: auditData.images,
       });
 
-      const overallScore =
-    calculateOverallScore({
+    const overallScore =
+      calculateOverallScore({
         seo: seoAnalysis.score,
         content: contentAnalysis.score,
         technical: technicalAnalysis.score,
-    });
+      });
 
     const recommendations =
       generateRecommendations(
         seoAnalysis.checks
       );
+
+   let aiRecommendations = "";
+
+    try {
+    aiRecommendations =
+        await generateAiRecommendations({
+        ...auditData,
+        seoAnalysis,
+        contentAnalysis,
+        technicalAnalysis,
+        });
+    } catch (error) {
+    console.error("AI ERROR:", error);
+
+    aiRecommendations =
+        "AI recommendations unavailable.";
+    }
 
     return NextResponse.json({
       success: true,
@@ -84,8 +105,9 @@ export async function POST(request: Request) {
         technicalAnalysis,
         overallScore,
         recommendations,
-        },
-            });
+        aiRecommendations,
+      },
+    });
   } catch (error) {
     console.error("API ERROR:", error);
 

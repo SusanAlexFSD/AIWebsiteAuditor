@@ -11,21 +11,19 @@ export async function crawlWebsite(url: string) {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36",
     });
 
-    try {
-      await page.goto(url, {
-        waitUntil: "domcontentloaded",
-        timeout: 10000,
-      });
-      await page.screenshot({
-        path: "./public/latest-audit.png",
-        fullPage: true,
-        });
-    } catch (error) {
-      return {
-        error: "Unable to access website",
-        details: String(error),
-      };
-    }
+ try {
+  await page.goto(url, {
+    waitUntil: "domcontentloaded",
+    timeout: 15000,
+  });
+} catch (error) {
+  console.error("CRAWLER ERROR:", error);
+
+  return {
+    error: "Unable to access website",
+    details: String(error),
+  };
+}
 
     const title = await page.title();
 
