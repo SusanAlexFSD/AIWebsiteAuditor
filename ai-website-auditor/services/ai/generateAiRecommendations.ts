@@ -17,14 +17,14 @@ console.log(
   process.env.OPENAI_API_KEY?.length
 );
 
-  const prompt = `
+const prompt = `
 You are an expert SEO consultant.
 
 Website Title:
 ${auditData.title}
 
 Meta Description:
-${auditData.metaDescription}
+${auditData.metaDescription ?? "Missing"}
 
 SEO Score:
 ${auditData.seoAnalysis.score}
@@ -35,13 +35,21 @@ ${auditData.contentAnalysis.score}
 Technical Score:
 ${auditData.technicalAnalysis.score}
 
-Provide:
+Return your response in EXACTLY this format:
 
-1. A short summary
-2. Top 3 improvements
-3. Suggested meta description if one is missing
+SUMMARY:
+<summary>
 
-Keep the response concise.
+IMPROVEMENTS:
+- improvement 1
+- improvement 2
+- improvement 3
+
+META_DESCRIPTION:
+Return ONLY the meta description text.
+Do not include HTML tags.
+Do not include quotation marks.
+Maximum 155 characters.
 `;
 
   const response =

@@ -51,6 +51,25 @@ export default function WebsiteAuditForm() {
   const seoScore =
     result?.data?.seoAnalysis?.score ?? 0;
 
+    const aiText =
+        result?.data?.aiRecommendations || "";
+
+        const summary =
+        aiText.split("IMPROVEMENTS:")[0]
+            ?.replace("SUMMARY:", "")
+            ?.trim();
+
+        const improvements =
+        aiText
+            .split("IMPROVEMENTS:")[1]
+            ?.split("META_DESCRIPTION:")[0]
+            ?.trim();
+
+        const metaDescriptionSuggestion =
+        aiText
+            .split("META_DESCRIPTION:")[1]
+            ?.trim();
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -183,33 +202,38 @@ export default function WebsiteAuditForm() {
           {/* AI ANALYSIS */}
 
         <div className="border rounded-xl p-6 mb-6">
-        <h3 className="font-bold text-lg mb-4">
+        <h3 className="font-bold text-xl mb-4">
             AI Analysis
         </h3>
 
-        <p className="whitespace-pre-wrap">
-            {result.data.aiRecommendations}
-        </p>
+        <div className="mb-6">
+            <h4 className="font-semibold mb-2">
+            Summary
+            </h4>
+
+            <p>{summary}</p>
         </div>
 
-          <div className="border rounded-xl p-6 mb-6">
-            <h3 className="font-bold text-lg mb-4">
-              Recommendations
-            </h3>
+        <div className="mb-6">
+            <h4 className="font-semibold mb-2">
+            Top Improvements
+            </h4>
 
-            <ul className="space-y-2">
-              {result.data.recommendations?.map(
-                (
-                  recommendation,
-                  index
-                ) => (
-                  <li key={index}>
-                    • {recommendation}
-                  </li>
-                )
-              )}
-            </ul>
-          </div>
+            <div className="whitespace-pre-wrap">
+            {improvements}
+            </div>
+        </div>
+
+        <div>
+            <h4 className="font-semibold mb-2">
+            Suggested Meta Description
+            </h4>
+
+            <div className="bg-gray-100 rounded-lg p-4 italic">
+            {metaDescriptionSuggestion}
+            </div>
+        </div>
+        </div>
 
           <button
             type="button"

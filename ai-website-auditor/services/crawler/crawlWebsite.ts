@@ -11,19 +11,29 @@ export async function crawlWebsite(url: string) {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36",
     });
 
- try {
-  await page.goto(url, {
-    waitUntil: "domcontentloaded",
-    timeout: 15000,
-  });
-} catch (error) {
-  console.error("CRAWLER ERROR:", error);
+    try {
+      await page.goto(url, {
+        waitUntil: "networkidle",
+        timeout: 15000,
+      });
 
-  return {
-    error: "Unable to access website",
-    details: String(error),
-  };
-}
+      await page.waitForTimeout(2000);
+    } catch (error) {
+      console.error("CRAWLER ERROR:", error);
+
+      return {
+        error: "Unable to access website",
+        details: String(error),
+      };
+    }
+
+    // Generate unique screenshot name
+    const screenshotName = `audit-${Date.now()}.png`;
+
+    await page.screenshot({
+      path: `./public/${screenshotName}`,
+      fullPage: true,
+    });
 
     const title = await page.title();
 
@@ -37,13 +47,31 @@ export async function crawlWebsite(url: string) {
       return meta?.getAttribute("content") ?? null;
     });
 
-    const links = await page.locator("a").count();
+    const links = await page.evaluate(() => {
+      return Array.from(
+        document.querySelectorAll("a")
+      ).filter(
+        (link) =>
+          link.href &&
+          link.href.trim() !== "" &&
+          !link.href.startsWith("javascript:")
+      ).length;
+    });
 
     const images = await page.locator("img").count();
 
-    const h1Count = await page.locator("h1").count();
+    const h1Count =
+      await page.locator("h1:visible").count();
 
-    const h2Count = await page.locator("h2").count();
+    const h2Count =
+      await page.locator("h2:visible").count();
+
+    console.log("Title:", title);
+    console.log("Meta:", metaDescription);
+    console.log("Links:", links);
+    console.log("Images:", images);
+    console.log("H1:", h1Count);
+    console.log("H2:", h2Count);
 
     return {
       title,
@@ -53,7 +81,7 @@ export async function crawlWebsite(url: string) {
       images,
       h1Count,
       h2Count,
-      screenshot: "/latest-audit.png",
+      screenshot: `/${screenshotName}`,
     };
   } finally {
     await browser.close();
