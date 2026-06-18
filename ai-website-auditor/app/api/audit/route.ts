@@ -7,15 +7,11 @@ import { analyseContent } from "@/services/content/analyseContent";
 import { analyseTechnical } from "@/services/technical/analyseTechnical";
 import { calculateOverallScore } from "@/services/scoring/calculateOverallScore";
 import { generateAiRecommendations } from "@/services/ai/generateAiRecommendations";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
-    console.log(
-  "OPENAI ENV:",
-  process.env.OPENAI_API_KEY
-);
   try {
     const body = await request.json();
-
     const { url } = body;
 
     if (!url) {
@@ -40,18 +36,18 @@ export async function POST(request: Request) {
 
     const auditData = await crawlWebsite(url);
 
-   if ("error" in auditData) {
-  console.error(auditData.details);
+    if ("error" in auditData) {
+      console.error(auditData.details);
 
-  return NextResponse.json(
-    {
-      success: false,
-      message: auditData.error,
-      details: auditData.details,
-    },
-    { status: 400 }
-  );
-}
+      return NextResponse.json(
+        {
+          success: false,
+          message: auditData.error,
+          details: auditData.details,
+        },
+        { status: 400 }
+      );
+    }
 
     const seoAnalysis = analyseSeo({
       title: auditData.title,
@@ -65,40 +61,51 @@ export async function POST(request: Request) {
       images: auditData.images,
     });
 
-    const technicalAnalysis =
-      analyseTechnical({
-        links: auditData.links,
-        images: auditData.images,
-      });
+    const technicalAnalysis = analyseTechnical({
+      links: auditData.links,
+      images: auditData.images,
+    });
 
-    const overallScore =
-      calculateOverallScore({
-        seo: seoAnalysis.score,
-        content: contentAnalysis.score,
-        technical: technicalAnalysis.score,
-      });
+    const overallScore = calculateOverallScore({
+      seo: seoAnalysis.score,
+      content: contentAnalysis.score,
+      technical: technicalAnalysis.score,
+    });
 
-    const recommendations =
-      generateRecommendations(
-        seoAnalysis.checks
-      );
+    const recommendations = generateRecommendations(
+      seoAnalysis.checks
+    );
 
-   let aiRecommendations = "";
+    let aiRecommendations = "";
 
     try {
-    aiRecommendations =
-        await generateAiRecommendations({
-        ...auditData,
-        seoAnalysis,
-        contentAnalysis,
-        technicalAnalysis,
-        });
+      aiRecommendations =
+        (await generateAiRecommendations({
+          ...auditData,
+          seoAnalysis,
+          contentAnalysis,
+          technicalAnalysis,
+        })) || "";
     } catch (error) {
-    console.error("AI ERROR:", error);
+      console.error("AI ERROR:", error);
 
-    aiRecommendations =
+      aiRecommendations =
         "AI recommendations unavailable.";
     }
+
+    // SAVE AUDIT TO DATABASE
+    await prisma.audit.create({
+      data: {
+        url: auditData.pageUrl,
+        title: auditData.title,
+
+        seoScore: seoAnalysis.score,
+        contentScore: contentAnalysis.score,
+        technicalScore: technicalAnalysis.score,
+
+        overallScore,
+      },
+    });
 
     return NextResponse.json({
       success: true,

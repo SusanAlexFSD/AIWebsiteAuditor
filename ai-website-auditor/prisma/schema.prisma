@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Audit {
+  id             String   @id @default(cuid())
+
+  url            String
+  title          String?
+
+  seoScore       Int
+  contentScore   Int
+  technicalScore Int
+  overallScore   Int
+
+  createdAt      DateTime @default(now())
+}
