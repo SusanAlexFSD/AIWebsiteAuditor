@@ -1,6 +1,9 @@
 interface TechnicalInput {
-  links: number;
-  images: number;
+  hasViewport: boolean;
+  hasSchema: boolean;
+  usesHttps: boolean;
+  hasRobots: boolean;
+  hasSitemap: boolean;
 }
 
 export function analyseTechnical(
@@ -8,15 +11,47 @@ export function analyseTechnical(
 ) {
   let score = 100;
 
-  if (data.links < 5) {
-    score -= 10;
+  const checks = {
+    hasViewport:
+      data.hasViewport,
+
+    hasSchema:
+      data.hasSchema,
+
+    usesHttps:
+      data.usesHttps,
+
+    hasRobots:
+      data.hasRobots,
+
+    hasSitemap:
+      data.hasSitemap,
+  };
+
+  if (!checks.usesHttps) {
+    score -= 20;
   }
 
-  if (data.images === 0) {
-    score -= 10;
+  if (!checks.hasViewport) {
+    score -= 20;
   }
+
+  if (!checks.hasRobots) {
+    score -= 20;
+  }
+
+  if (!checks.hasSitemap) {
+    score -= 20;
+  }
+
+  if (!checks.hasSchema) {
+    score -= 20;
+  }
+
+  score = Math.max(score, 0);
 
   return {
     score,
+    checks,
   };
 }

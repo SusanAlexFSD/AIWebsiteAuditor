@@ -6,34 +6,64 @@ export interface AuditData {
   links: number;
   images: number;
 
+  missingAltTags: number;
+
   h1Count: number;
   h2Count: number;
 
   screenshot: string;
 
   seoAnalysis: {
-    score: number;
+  score: number;
 
-    checks: {
-      hasTitle: boolean;
-      hasMetaDescription: boolean;
-      hasH1: boolean;
-    };
+  checks: {
+    hasTitle: boolean;
+    hasMetaDescription: boolean;
+    hasH1: boolean;
+
+    titleLengthGood: boolean;
+    metaLengthGood: boolean;
+
+    singleH1: boolean;
+
+    hasCanonical: boolean;
+
+    hasOgTitle: boolean;
+    hasOgDescription: boolean;
+    hasOgImage: boolean;
   };
-
+};
   contentAnalysis: {
     score: number;
   };
 
   technicalAnalysis: {
-    score: number;
+  score: number;
+
+  checks: {
+    usesHttps: boolean;
+    hasViewport: boolean;
+    hasRobots: boolean;
+    hasSitemap: boolean;
+    hasSchema: boolean;
   };
+};
+
+  accessibilityAnalysis: {
+  score: number;
+};
 
   overallScore: number;
 
   recommendations: string[];
 
   aiRecommendations: string;
+
+  hasCanonical: boolean;
+
+hasOgTitle: boolean;
+hasOgDescription: boolean;
+hasOgImage: boolean;
 }
 
 export interface AuditResponse {

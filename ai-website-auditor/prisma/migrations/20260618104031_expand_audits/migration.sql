@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Audit" ADD COLUMN "aiRecommendations" TEXT;
+ALTER TABLE "Audit" ADD COLUMN "h1Count" INTEGER;
+ALTER TABLE "Audit" ADD COLUMN "h2Count" INTEGER;
+ALTER TABLE "Audit" ADD COLUMN "images" INTEGER;
+ALTER TABLE "Audit" ADD COLUMN "links" INTEGER;
+ALTER TABLE "Audit" ADD COLUMN "metaDescription" TEXT;

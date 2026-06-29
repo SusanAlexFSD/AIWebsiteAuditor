@@ -8,15 +8,57 @@ datasource db {
 }
 
 model Audit {
-  id             String   @id @default(cuid())
+  id                String   @id @default(cuid())
 
-  url            String
-  title          String?
+  userId            String?
 
-  seoScore       Int
-  contentScore   Int
-  technicalScore Int
-  overallScore   Int
+  user              User?    @relation(fields: [userId], references: [id])
 
-  createdAt      DateTime @default(now())
+  url               String
+  title             String?
+
+  seoScore          Int
+  contentScore      Int
+  technicalScore    Int
+  accessibilityScore Int?
+
+  overallScore      Int
+
+  metaDescription   String?
+
+  links             Int?
+  images            Int?
+
+  missingAltTags    Int?
+
+  h1Count           Int?
+  h2Count           Int?
+
+  hasCanonical     Boolean?
+  hasOgTitle       Boolean?
+  hasOgDescription Boolean?
+  hasOgImage       Boolean?
+
+  hasViewport      Boolean?
+  hasSchema        Boolean?
+  hasRobots        Boolean?
+  hasSitemap       Boolean?
+  usesHttps        Boolean?
+
+  screenshot        String?
+
+  aiRecommendations String?
+
+  createdAt         DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+
+  audits    Audit[]
+
+  createdAt DateTime @default(now())
 }

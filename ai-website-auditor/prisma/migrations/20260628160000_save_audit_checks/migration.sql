@@ -1,0 +1,10 @@
+-- AlterTable
+ALTER TABLE "Audit" ADD COLUMN "hasCanonical" BOOLEAN;
+ALTER TABLE "Audit" ADD COLUMN "hasOgDescription" BOOLEAN;
+ALTER TABLE "Audit" ADD COLUMN "hasOgImage" BOOLEAN;
+ALTER TABLE "Audit" ADD COLUMN "hasOgTitle" BOOLEAN;
+ALTER TABLE "Audit" ADD COLUMN "hasRobots" BOOLEAN;
+ALTER TABLE "Audit" ADD COLUMN "hasSchema" BOOLEAN;
+ALTER TABLE "Audit" ADD COLUMN "hasSitemap" BOOLEAN;
+ALTER TABLE "Audit" ADD COLUMN "hasViewport" BOOLEAN;
+ALTER TABLE "Audit" ADD COLUMN "usesHttps" BOOLEAN;

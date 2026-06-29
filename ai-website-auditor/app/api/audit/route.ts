@@ -8,11 +8,31 @@ import { analyseTechnical } from "@/services/technical/analyseTechnical";
 import { calculateOverallScore } from "@/services/scoring/calculateOverallScore";
 import { generateAiRecommendations } from "@/services/ai/generateAiRecommendations";
 import { prisma } from "@/lib/prisma";
+import { analyseAccessibility }
+from "@/services/accessibility/analyseAccessibility";
+import { getServerSession } from "next-auth";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { url } = body;
+
+    const session =
+  await getServerSession();
+
+let userId: string | null = null;
+
+if (session?.user?.email) {
+  const user =
+    await prisma.user.findUnique({
+      where: {
+        email:
+          session.user.email,
+      },
+    });
+
+  userId = user?.id ?? null;
+}
 
     if (!url) {
       return NextResponse.json(
@@ -50,10 +70,23 @@ export async function POST(request: Request) {
     }
 
     const seoAnalysis = analyseSeo({
-      title: auditData.title,
-      metaDescription: auditData.metaDescription,
-      h1Count: auditData.h1Count,
-    });
+  title: auditData.title,
+  metaDescription:
+    auditData.metaDescription,
+  h1Count: auditData.h1Count,
+
+  hasCanonical:
+    auditData.hasCanonical,
+
+  hasOgTitle:
+    auditData.hasOgTitle,
+
+  hasOgDescription:
+    auditData.hasOgDescription,
+
+  hasOgImage:
+    auditData.hasOgImage,
+});
 
     const contentAnalysis = analyseContent({
       h1Count: auditData.h1Count,
@@ -61,16 +94,40 @@ export async function POST(request: Request) {
       images: auditData.images,
     });
 
-    const technicalAnalysis = analyseTechnical({
-      links: auditData.links,
-      images: auditData.images,
-    });
+    const accessibilityAnalysis =
+  analyseAccessibility({
+    title: auditData.title,
+    h1Count: auditData.h1Count,
+    missingAltTags:
+      auditData.missingAltTags,
+  });
 
-    const overallScore = calculateOverallScore({
-      seo: seoAnalysis.score,
-      content: contentAnalysis.score,
-      technical: technicalAnalysis.score,
-    });
+  const technicalAnalysis =
+  analyseTechnical({
+    hasViewport:
+      auditData.hasViewport,
+
+    hasSchema:
+      auditData.hasSchema,
+
+    usesHttps:
+      auditData.usesHttps,
+
+    hasRobots:
+      auditData.hasRobots,
+
+    hasSitemap:
+      auditData.hasSitemap,
+  });
+
+    const overallScore =
+  calculateOverallScore({
+    seo: seoAnalysis.score,
+    content: contentAnalysis.score,
+    technical: technicalAnalysis.score,
+    accessibility:
+      accessibilityAnalysis.score,
+  });
 
     const recommendations = generateRecommendations(
       seoAnalysis.checks
@@ -94,18 +151,59 @@ export async function POST(request: Request) {
     }
 
     // SAVE AUDIT TO DATABASE
-    await prisma.audit.create({
-      data: {
-        url: auditData.pageUrl,
-        title: auditData.title,
+if (userId) {
+  await prisma.audit.create({
+    data: {
+      userId,
 
-        seoScore: seoAnalysis.score,
-        contentScore: contentAnalysis.score,
-        technicalScore: technicalAnalysis.score,
+      url: auditData.pageUrl,
+      title: auditData.title,
 
-        overallScore,
-      },
-    });
+      seoScore: seoAnalysis.score,
+      contentScore:
+        contentAnalysis.score,
+
+      technicalScore:
+        technicalAnalysis.score,
+
+      accessibilityScore:
+        accessibilityAnalysis.score,
+
+      overallScore,
+
+      metaDescription:
+        auditData.metaDescription,
+
+      links: auditData.links,
+      images: auditData.images,
+
+      missingAltTags:
+        auditData.missingAltTags,
+
+      h1Count:
+        auditData.h1Count,
+
+      h2Count:
+        auditData.h2Count,
+
+      hasCanonical: auditData.hasCanonical,
+      hasOgTitle: auditData.hasOgTitle,
+      hasOgDescription: auditData.hasOgDescription,
+      hasOgImage: auditData.hasOgImage,
+
+      hasViewport: auditData.hasViewport,
+      hasSchema: auditData.hasSchema,
+      hasRobots: auditData.hasRobots,
+      hasSitemap: auditData.hasSitemap,
+      usesHttps: auditData.usesHttps,
+
+      screenshot:
+        auditData.screenshot,
+
+      aiRecommendations,
+    },
+  });
+}
 
     return NextResponse.json({
       success: true,
@@ -114,6 +212,7 @@ export async function POST(request: Request) {
         seoAnalysis,
         contentAnalysis,
         technicalAnalysis,
+        accessibilityAnalysis,
         overallScore,
         recommendations,
         aiRecommendations,

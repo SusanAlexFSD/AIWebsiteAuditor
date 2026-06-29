@@ -1,17 +1,20 @@
-interface ScoreInput {
+export function calculateOverallScore({
+  seo,
+  content,
+  technical,
+  accessibility,
+}: {
   seo: number;
   content: number;
   technical: number;
-}
-
-export function calculateOverallScore(
-  scores: ScoreInput
-) {
+  accessibility: number;
+}) {
   return Math.round(
     (
-      scores.seo +
-      scores.content +
-      scores.technical
-    ) / 3
+      seo +
+      content +
+      technical +
+      accessibility
+    ) / 4
   );
 }

@@ -8,47 +8,92 @@ export async function generateAiRecommendations(
   });
 
   console.log(
-  "OPENAI KEY EXISTS:",
-  !!process.env.OPENAI_API_KEY
-);
+    "OPENAI KEY EXISTS:",
+    !!process.env.OPENAI_API_KEY
+  );
 
-console.log(
-  "KEY LENGTH:",
-  process.env.OPENAI_API_KEY?.length
-);
+  console.log(
+    "KEY LENGTH:",
+    process.env.OPENAI_API_KEY?.length
+  );
 
-const prompt = `
-You are an expert SEO consultant.
+  const prompt = `
+You are a senior SEO consultant.
 
-Website Title:
+Analyse the website audit results and provide specific recommendations based on the actual issues found.
+
+WEBSITE INFORMATION
+
+Title:
 ${auditData.title}
 
 Meta Description:
 ${auditData.metaDescription ?? "Missing"}
 
-SEO Score:
+SEO SCORE:
 ${auditData.seoAnalysis.score}
 
-Content Score:
+CONTENT SCORE:
 ${auditData.contentAnalysis.score}
 
-Technical Score:
+TECHNICAL SCORE:
 ${auditData.technicalAnalysis.score}
+
+SEO CHECKS
+
+Title Present:
+${auditData.seoAnalysis.checks.hasTitle}
+
+Meta Description Present:
+${auditData.seoAnalysis.checks.hasMetaDescription}
+
+Title Length Good:
+${auditData.seoAnalysis.checks.titleLengthGood}
+
+Meta Length Good:
+${auditData.seoAnalysis.checks.metaLengthGood}
+
+Single H1:
+${auditData.seoAnalysis.checks.singleH1}
+
+Canonical Tag:
+${auditData.seoAnalysis.checks.hasCanonical}
+
+Open Graph Title:
+${auditData.seoAnalysis.checks.hasOgTitle}
+
+Open Graph Description:
+${auditData.seoAnalysis.checks.hasOgDescription}
+
+Open Graph Image:
+${auditData.seoAnalysis.checks.hasOgImage}
+
+Images:
+${auditData.images}
+
+Missing ALT Tags:
+${auditData.missingAltTags}
+
+Links:
+${auditData.links}
 
 Return your response in EXACTLY this format:
 
 SUMMARY:
-<summary>
+Write 2-4 sentences summarising the overall website quality.
 
 IMPROVEMENTS:
-- improvement 1
-- improvement 2
-- improvement 3
+- Give specific improvements based on missing SEO items
+- Mention missing ALT tags if any exist
+- Mention missing Open Graph tags if any are missing
+- Mention missing canonical tag if missing
+- Mention title or meta length issues if present
+- Give a maximum of 5 improvements
 
 META_DESCRIPTION:
-Return ONLY the meta description text.
-Do not include HTML tags.
+Return ONLY an improved meta description.
 Do not include quotation marks.
+Do not include HTML.
 Maximum 155 characters.
 `;
 
