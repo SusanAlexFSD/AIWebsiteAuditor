@@ -11,7 +11,7 @@ import TechnicalChecksCard from "@/components/Audit/TechnicalChecksCard";
 import AiAnalysisCard from "@/components/Audit/AiAnalysisCard";
 import WebsiteInfoCard from "@/components/Audit/WebsiteInfoCard";
 import AccessibilityCard from "../Audit/AccessibilityCard";
-import AiChat from "@/components/Audit/AiChat";
+import AiChat from "@/components/AI/AiChat";
 
 export default function WebsiteAuditForm() {
   const [url, setUrl] = useState("");

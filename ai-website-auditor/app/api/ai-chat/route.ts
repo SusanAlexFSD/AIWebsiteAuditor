@@ -7,18 +7,31 @@ export async function POST(request: Request) {
 
     const { audit, messages } = body;
 
+    if (!audit) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Audit data is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     if (
-      !audit ||
-      !messages ||
-      !Array.isArray(messages)
+      !Array.isArray(messages) ||
+      messages.length === 0
     ) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "Audit and messages are required.",
+            "A conversation history is required.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
@@ -44,7 +57,9 @@ export async function POST(request: Request) {
         message:
           "Unable to generate AI response.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
