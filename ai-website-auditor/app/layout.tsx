@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Navbar from "@/components/Layout/Navbar";
+
 import Providers from "@/components/Layout/Providers";
+import AppHeader from "@/components/Layout/AppHeader";
+import AppFooter from "@/components/Layout/AppFooter";
+import PageContainer from "@/components/Layout/PageContainer";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +21,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI Website Auditor",
   description:
-    "Analyze websites with AI-powered SEO, content, and technical audits.",
+    "AI-powered website audits with SEO, accessibility, technical analysis and intelligent recommendations.",
 };
 
 export default function RootLayout({
@@ -30,14 +34,20 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-screen bg-gray-50">
-        <Providers>
-          <Navbar />
+      <body className="flex min-h-screen flex-col bg-gray-50 text-gray-900">
 
-          <main className="flex-1">
+        <Providers>
+
+          <AppHeader />
+
+          <PageContainer className="flex-1">
             {children}
-          </main>
+          </PageContainer>
+
+          <AppFooter />
+
         </Providers>
+
       </body>
     </html>
   );

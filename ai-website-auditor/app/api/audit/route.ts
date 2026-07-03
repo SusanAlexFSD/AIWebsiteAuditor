@@ -1,38 +1,39 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+
+import type { AuditData } from "@/types/audit";
+
+import { prisma } from "@/lib/prisma";
 import { validateUrl } from "@/lib/validateUrl";
+
 import { crawlWebsite } from "@/services/crawler/crawlWebsite";
 import { analyseSeo } from "@/services/seo/analyseSeo";
-import { generateRecommendations } from "@/services/seo/generateRecommendations";
 import { analyseContent } from "@/services/content/analyseContent";
 import { analyseTechnical } from "@/services/technical/analyseTechnical";
+import { analyseAccessibility } from "@/services/accessibility/analyseAccessibility";
+
 import { calculateOverallScore } from "@/services/scoring/calculateOverallScore";
+import { generateRecommendations } from "@/services/seo/generateRecommendations";
 import { generateAiRecommendations } from "@/services/ai/generateAiRecommendations";
-import { prisma } from "@/lib/prisma";
-import { analyseAccessibility }
-from "@/services/accessibility/analyseAccessibility";
-import { getServerSession } from "next-auth";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { url } = body;
 
-    const session =
-  await getServerSession();
+    const session = await getServerSession();
 
-let userId: string | null = null;
+    let userId: string | null = null;
 
-if (session?.user?.email) {
-  const user =
-    await prisma.user.findUnique({
-      where: {
-        email:
-          session.user.email,
-      },
-    });
+    if (session?.user?.email) {
+      const user = await prisma.user.findUnique({
+        where: {
+          email: session.user.email,
+        },
+      });
 
-  userId = user?.id ?? null;
-}
+      userId = user?.id ?? null;
+    }
 
     if (!url) {
       return NextResponse.json(
@@ -57,8 +58,6 @@ if (session?.user?.email) {
     const auditData = await crawlWebsite(url);
 
     if ("error" in auditData) {
-      console.error(auditData.details);
-
       return NextResponse.json(
         {
           success: false,
@@ -70,23 +69,14 @@ if (session?.user?.email) {
     }
 
     const seoAnalysis = analyseSeo({
-  title: auditData.title,
-  metaDescription:
-    auditData.metaDescription,
-  h1Count: auditData.h1Count,
-
-  hasCanonical:
-    auditData.hasCanonical,
-
-  hasOgTitle:
-    auditData.hasOgTitle,
-
-  hasOgDescription:
-    auditData.hasOgDescription,
-
-  hasOgImage:
-    auditData.hasOgImage,
-});
+      title: auditData.title,
+      metaDescription: auditData.metaDescription,
+      h1Count: auditData.h1Count,
+      hasCanonical: auditData.hasCanonical,
+      hasOgTitle: auditData.hasOgTitle,
+      hasOgDescription: auditData.hasOgDescription,
+      hasOgImage: auditData.hasOgImage,
+    });
 
     const contentAnalysis = analyseContent({
       h1Count: auditData.h1Count,
@@ -94,130 +84,132 @@ if (session?.user?.email) {
       images: auditData.images,
     });
 
-    const accessibilityAnalysis =
-  analyseAccessibility({
-    title: auditData.title,
-    h1Count: auditData.h1Count,
-    missingAltTags:
-      auditData.missingAltTags,
-  });
+    const technicalAnalysis = analyseTechnical({
+      hasViewport: auditData.hasViewport,
+      hasSchema: auditData.hasSchema,
+      usesHttps: auditData.usesHttps,
+      hasRobots: auditData.hasRobots,
+      hasSitemap: auditData.hasSitemap,
+    });
 
-  const technicalAnalysis =
-  analyseTechnical({
-    hasViewport:
-      auditData.hasViewport,
+    const accessibilityAnalysis = analyseAccessibility({
+      title: auditData.title,
+      h1Count: auditData.h1Count,
+      missingAltTags: auditData.missingAltTags,
+    });
 
-    hasSchema:
-      auditData.hasSchema,
-
-    usesHttps:
-      auditData.usesHttps,
-
-    hasRobots:
-      auditData.hasRobots,
-
-    hasSitemap:
-      auditData.hasSitemap,
-  });
-
-    const overallScore =
-  calculateOverallScore({
-    seo: seoAnalysis.score,
-    content: contentAnalysis.score,
-    technical: technicalAnalysis.score,
-    accessibility:
-      accessibilityAnalysis.score,
-  });
+    const overallScore = calculateOverallScore({
+      seo: seoAnalysis.score,
+      content: contentAnalysis.score,
+      technical: technicalAnalysis.score,
+      accessibility: accessibilityAnalysis.score,
+    });
 
     const recommendations = generateRecommendations(
       seoAnalysis.checks
     );
 
-    let aiRecommendations = "";
+    const auditResult: AuditData = {
+      ...auditData,
 
-    try {
-      aiRecommendations =
-        (await generateAiRecommendations({
-          ...auditData,
-          seoAnalysis,
-          contentAnalysis,
-          technicalAnalysis,
-        })) || "";
-    } catch (error) {
-      console.error("AI ERROR:", error);
-
-      aiRecommendations =
-        "AI recommendations unavailable.";
-    }
-
-    // SAVE AUDIT TO DATABASE
-if (userId) {
-  await prisma.audit.create({
-    data: {
-      userId,
-
-      url: auditData.pageUrl,
-      title: auditData.title,
-
-      seoScore: seoAnalysis.score,
-      contentScore:
-        contentAnalysis.score,
-
-      technicalScore:
-        technicalAnalysis.score,
-
-      accessibilityScore:
-        accessibilityAnalysis.score,
+      seoAnalysis,
+      contentAnalysis,
+      technicalAnalysis,
+      accessibilityAnalysis,
 
       overallScore,
 
-      metaDescription:
-        auditData.metaDescription,
+      recommendations,
 
-      links: auditData.links,
-      images: auditData.images,
+      aiRecommendations: "",
 
-      missingAltTags:
-        auditData.missingAltTags,
+      hasCanonical: seoAnalysis.checks.hasCanonical,
+      hasOgTitle: seoAnalysis.checks.hasOgTitle,
+      hasOgDescription: seoAnalysis.checks.hasOgDescription,
+      hasOgImage: seoAnalysis.checks.hasOgImage,
+    };
 
-      h1Count:
-        auditData.h1Count,
+    try {
+      auditResult.aiRecommendations =
+        await generateAiRecommendations(
+          auditResult
+        );
+    } catch (error) {
+      console.error("AI ERROR:", error);
 
-      h2Count:
-        auditData.h2Count,
+      auditResult.aiRecommendations =
+        "AI recommendations unavailable.";
+    }
 
-      hasCanonical: auditData.hasCanonical,
-      hasOgTitle: auditData.hasOgTitle,
-      hasOgDescription: auditData.hasOgDescription,
-      hasOgImage: auditData.hasOgImage,
+    if (userId) {
+      await prisma.audit.create({
+        data: {
+          userId,
 
-      hasViewport: auditData.hasViewport,
-      hasSchema: auditData.hasSchema,
-      hasRobots: auditData.hasRobots,
-      hasSitemap: auditData.hasSitemap,
-      usesHttps: auditData.usesHttps,
+          url: auditResult.pageUrl,
+          title: auditResult.title,
 
-      screenshot:
-        auditData.screenshot,
+          seoScore: auditResult.seoAnalysis.score,
+          contentScore: auditResult.contentAnalysis.score,
+          technicalScore: auditResult.technicalAnalysis.score,
+          accessibilityScore:
+            auditResult.accessibilityAnalysis.score,
 
-      aiRecommendations,
-    },
-  });
-}
+          overallScore: auditResult.overallScore,
+
+          metaDescription:
+            auditResult.metaDescription,
+
+          links: auditResult.links,
+          images: auditResult.images,
+
+          missingAltTags:
+            auditResult.missingAltTags,
+
+          h1Count: auditResult.h1Count,
+          h2Count: auditResult.h2Count,
+
+          hasCanonical:
+            auditResult.hasCanonical,
+
+          hasOgTitle:
+            auditResult.hasOgTitle,
+
+          hasOgDescription:
+            auditResult.hasOgDescription,
+
+          hasOgImage:
+            auditResult.hasOgImage,
+
+          hasViewport:
+            auditData.hasViewport,
+
+          hasSchema:
+            auditData.hasSchema,
+
+          hasRobots:
+            auditData.hasRobots,
+
+          hasSitemap:
+            auditData.hasSitemap,
+
+          usesHttps:
+            auditData.usesHttps,
+
+          screenshot:
+            auditResult.screenshot,
+
+          aiRecommendations:
+            auditResult.aiRecommendations,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      data: {
-        ...auditData,
-        seoAnalysis,
-        contentAnalysis,
-        technicalAnalysis,
-        accessibilityAnalysis,
-        overallScore,
-        recommendations,
-        aiRecommendations,
-      },
+      data: auditResult,
     });
+
   } catch (error) {
     console.error("API ERROR:", error);
 
@@ -226,7 +218,9 @@ if (userId) {
         success: false,
         message: "Audit failed",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

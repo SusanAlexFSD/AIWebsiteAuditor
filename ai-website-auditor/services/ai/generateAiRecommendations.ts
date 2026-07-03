@@ -1,7 +1,8 @@
 import OpenAI from "openai";
+import type { AuditData } from "@/types/audit";
 
 export async function generateAiRecommendations(
-  auditData: any
+  auditData: AuditData
 ): Promise<string> {
   const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,

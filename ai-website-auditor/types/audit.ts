@@ -39,7 +39,6 @@ export interface AuditData {
 
   technicalAnalysis: {
   score: number;
-
   checks: {
     usesHttps: boolean;
     hasViewport: boolean;

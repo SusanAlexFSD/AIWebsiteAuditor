@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import MetricCard from "@/components/UI/MetricCard";
 import type { AuditData } from "@/types/audit";
 
@@ -11,28 +13,33 @@ export default function AuditSummary({
   const score = data.overallScore;
 
   let colour = "text-red-600";
-  let bg = "bg-red-50";
+  let background = "bg-red-50";
   let status = "Needs Improvement";
 
   if (score >= 80) {
     colour = "text-green-600";
-    bg = "bg-green-50";
+    background = "bg-green-50";
     status = "Excellent";
   } else if (score >= 60) {
     colour = "text-yellow-600";
-    bg = "bg-yellow-50";
+    background = "bg-yellow-50";
     status = "Good";
   }
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+      <div className="mb-8 overflow-hidden rounded-2xl bg-white shadow-lg">
 
-        <img
-          src={data.screenshot}
-          alt="Website Screenshot"
-          className="w-full border-b"
-        />
+        {data.screenshot && (
+          <Image
+            src={data.screenshot}
+            alt="Website Screenshot"
+            width={1280}
+            height={720}
+            priority
+            className="h-auto w-full border-b object-cover"
+          />
+        )}
 
         <div className="p-8">
 
@@ -43,7 +50,7 @@ export default function AuditSummary({
             </p>
 
             <p
-              className={`inline-block mt-3 px-5 py-2 rounded-full font-semibold ${bg} ${colour}`}
+              className={`mt-3 inline-block rounded-full px-5 py-2 font-semibold ${background} ${colour}`}
             >
               {status}
             </p>
@@ -54,19 +61,17 @@ export default function AuditSummary({
 
           </div>
 
-          {/* Progress Bar */}
-
           <div className="mt-8">
 
-            <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-4 w-full overflow-hidden rounded-full bg-gray-200">
 
               <div
-                className={`h-4 ${
+                className={`h-full transition-all duration-700 ${
                   score >= 80
                     ? "bg-green-500"
                     : score >= 60
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
                 }`}
                 style={{
                   width: `${score}%`,
@@ -81,7 +86,7 @@ export default function AuditSummary({
 
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
 
         <MetricCard
           title="SEO"

@@ -180,7 +180,7 @@ export default function WebsiteAuditForm() {
               type="button"
               onClick={() =>
                 generatePdfReport(
-                  result.data
+                  result.data!
                 )
               }
               className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-4 font-semibold"

@@ -1,13 +1,8 @@
 import OpenAI from "openai";
 import type { AuditData } from "@/types/audit";
 
-import {
-  detectIntent,
-} from "./intents/detectIntent";
-
-import {
-  getIntentPrompt,
-} from "./intents/getIntentPrompt";
+import { detectIntent } from "./intents/detectIntent";
+import { getIntentPrompt } from "./intents/getIntentPrompt";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -22,17 +17,11 @@ export async function chatWithAudit(
   audit: AuditData,
   messages: ChatMessage[]
 ) {
+  const latestMessage = messages[messages.length - 1];
 
-  const latestMessage =
-    messages[messages.length - 1];
+  const intent = detectIntent(latestMessage.content);
 
-  const intent =
-    detectIntent(
-      latestMessage.content
-    );
-
-  const intentPrompt =
-    getIntentPrompt(intent);
+  const intentPrompt = getIntentPrompt(intent);
 
   const systemPrompt = `
 You are an AI Website Consultant.
@@ -47,15 +36,17 @@ You are simultaneously acting as:
 • React Developer
 • Next.js Developer
 • Technical Content Writer
-• Digital Marketing Consultant.
+• Digital Marketing Consultant
 
-Your job is to help users improve their websites using ONLY the audit provided.
+Your job is to help users improve websites using ONLY the audit provided.
 
 Never invent issues.
 
-Always explain WHY something matters.
+Always explain:
 
-Always explain HOW to fix it.
+• WHY something matters
+• HOW to fix it
+• WHERE to implement it
 
 Always provide production-ready solutions.
 
@@ -67,9 +58,9 @@ YOUR RESPONSIBILITIES
 • Explain why it matters.
 • Explain how to fix it.
 • Estimate SEO impact.
-• Estimate difficulty.
+• Estimate implementation difficulty.
 • Explain exactly where changes belong.
-• Follow SEO best practices.
+• Follow modern SEO and accessibility best practices.
 
 --------------------------------------------------
 
@@ -78,25 +69,67 @@ GENERATING CODE
 When code is requested:
 
 • Produce complete working examples.
-• Use fenced markdown.
-• Specify the language.
-• Never return incomplete snippets unless asked.
+• Use fenced Markdown code blocks.
+• Always specify the language.
+• Never return incomplete snippets unless requested.
 
 You can generate:
 
+• metadata.ts
+• robots.txt
+• sitemap.xml
+• manifest.json
+• JSON-LD Schema
+• Open Graph tags
+• Canonical tags
+• React components
+• Next.js pages
+• Tailwind components
 • HTML
 • CSS
 • JavaScript
 • TypeScript
-• React
-• Next.js
-• Tailwind
-• JSON-LD
-• metadata.ts
-• robots.txt
-• sitemap.xml
-• Open Graph tags
-• Canonical tags
+• API Routes
+• Middleware
+• Layouts
+• Server Components
+• Client Components
+
+--------------------------------------------------
+
+AI ASSET GENERATION
+
+Whenever the user requests code, configuration files, SEO assets or project files, always generate downloadable assets.
+
+Before every generated file write a header in this exact format:
+
+FILE: filename.ext
+
+Examples:
+
+FILE: metadata.ts
+
+FILE: robots.txt
+
+FILE: sitemap.xml
+
+FILE: schema.json
+
+FILE: Hero.tsx
+
+FILE: page.tsx
+
+Immediately after the FILE header, output the complete production-ready file inside a fenced Markdown code block.
+
+Rules:
+
+• Never omit the FILE header.
+• Never invent filenames.
+• Use realistic filenames.
+• Generate complete files whenever possible.
+• If multiple files are needed, output each one with its own FILE header.
+
+This formatting is mandatory because the application automatically detects downloadable files.
 
 --------------------------------------------------
 
@@ -163,10 +196,10 @@ ${audit.images}
 Missing ALT Tags:
 ${audit.missingAltTags}
 
-H1:
+H1 Tags:
 ${audit.h1Count}
 
-H2:
+H2 Tags:
 ${audit.h2Count}
 
 --------------------------------------------------
@@ -216,17 +249,15 @@ IMPORTANT
 
 Remember the entire conversation.
 
-Users may ask things like:
+Users may ask:
 
 • "Where do I put that?"
-
 • "Can you improve it?"
-
 • "Rewrite it."
-
 • "Convert it to React."
+• "Show me the Next.js version."
 
-These always refer to previous messages.
+These always refer to previous responses.
 
 Always behave like an experienced consultant.
 
@@ -235,23 +266,29 @@ Always behave like an experienced consultant.
 SPECIALIST INSTRUCTIONS
 
 ${intentPrompt}
+
+--------------------------------------------------
+
+FINAL RULE
+
+If your response contains one or more complete files, ALWAYS begin each file with:
+
+FILE: filename.ext
+
+This header is mandatory because the application automatically detects downloadable files.
 `;
 
-  const completion =
-    await openai.chat.completions.create({
-      model: "gpt-4.1",
-
-      temperature: 0.3,
-
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-
-        ...messages,
-      ],
-    });
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4.1",
+    temperature: 0.3,
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt,
+      },
+      ...messages,
+    ],
+  });
 
   return (
     completion.choices[0].message.content ??

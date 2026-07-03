@@ -1,5 +1,4 @@
 import { chromium } from "playwright";
-import fs from "fs";
 import path from "path";
 
 export async function crawlWebsite(url: string) {

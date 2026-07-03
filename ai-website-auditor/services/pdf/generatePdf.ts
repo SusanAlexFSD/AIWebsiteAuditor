@@ -1,6 +1,11 @@
 import jsPDF from "jspdf";
 
-export function generatePdfReport(data: any) {
+import type { AuditData } from "@/types/audit";
+
+export function generatePdfReport(
+  data: AuditData
+) {
+
   const doc = new jsPDF();
 
   doc.setFontSize(20);
@@ -24,17 +29,5 @@ export function generatePdfReport(data: any) {
 
   doc.text(`H2 Tags: ${data.h2Count}`, 20, 90);
 
-  doc.text("Recommendations:", 20, 110);
-
-  data.recommendations.forEach(
-    (recommendation: string, index: number) => {
-      doc.text(
-        `• ${recommendation}`,
-        20,
-        120 + index * 10
-      );
-    }
-  );
-
-  doc.save("website-audit-report.pdf");
+   doc.save("website-audit-report.pdf");
 }

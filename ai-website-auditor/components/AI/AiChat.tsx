@@ -3,14 +3,8 @@
 import { useState } from "react";
 import type { AuditData } from "@/types/audit";
 
-import ReactMarkdown from "react-markdown";
-
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
-
-import AiFileDownload from "@/components/AI/AiFileDownload";
-
 import QuickActions from "./QuickActions";
+import AiMessage from "./AiMessage";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -25,57 +19,39 @@ const quickActions = [
   {
     title: "🚀 SEO Title",
     prompt:
-      "Generate five SEO-optimised page titles for this website. Keep every title between 50 and 60 characters. Explain which one is best.",
+      "Generate five SEO-optimised page titles for this website.",
   },
-
   {
     title: "📝 Meta Description",
     prompt:
-      "Generate three compelling meta descriptions under 155 characters. Explain which one you recommend.",
+      "Generate three compelling meta descriptions.",
   },
-
   {
-    title: "🏷️ Schema Markup",
+    title: "🏷️ Schema",
     prompt:
-      "Generate production-ready JSON-LD Schema.org markup for this website. Explain where it should be added.",
+      "Generate production-ready JSON-LD schema.",
   },
-
-  {
-    title: "📱 Open Graph Tags",
-    prompt:
-      "Generate complete Open Graph meta tags for this website.",
-  },
-
-  {
-    title: "✍️ Rewrite Homepage",
-    prompt:
-      "Rewrite the homepage hero section to improve conversions, readability and SEO.",
-  },
-
   {
     title: "📅 30 Day SEO Plan",
     prompt:
-      "Create a practical 30-day SEO improvement roadmap prioritised by highest impact first.",
+      "Create a practical 30-day SEO roadmap.",
   },
-
   {
     title: "⚡ Core Web Vitals",
     prompt:
-      "Explain how this website can improve its Core Web Vitals with practical recommendations.",
+      "Explain how to improve Core Web Vitals.",
   },
-
   {
     title: "♿ Accessibility",
     prompt:
-      "Review the accessibility score and produce a detailed accessibility improvement plan.",
+      "Create an accessibility improvement plan.",
   },
 ];
 
 export default function AiChat({
   audit,
 }: Props) {
-  const [question, setQuestion] =
-    useState("");
+  const [question, setQuestion] = useState("");
 
   const [messages, setMessages] =
     useState<ChatMessage[]>([]);
@@ -84,21 +60,19 @@ export default function AiChat({
     useState(false);
 
   async function askAI(
-    customQuestion?: string
+    customPrompt?: string
   ) {
     const prompt =
-      customQuestion ?? question;
+      customPrompt ?? question;
 
     if (!prompt.trim()) return;
 
-    const userMessage: ChatMessage = {
-      role: "user",
-      content: prompt,
-    };
-
-    const updatedMessages = [
+    const updatedMessages: ChatMessage[] = [
       ...messages,
-      userMessage,
+      {
+        role: "user",
+        content: prompt,
+      },
     ];
 
     setMessages(updatedMessages);
@@ -127,8 +101,8 @@ export default function AiChat({
       const data =
         await response.json();
 
-      setMessages((prev) => [
-        ...prev,
+      setMessages([
+        ...updatedMessages,
         {
           role: "assistant",
           content:
@@ -136,11 +110,9 @@ export default function AiChat({
             "No response.",
         },
       ]);
-    } catch (error) {
-      console.error(error);
-
-      setMessages((prev) => [
-        ...prev,
+    } catch {
+      setMessages([
+        ...updatedMessages,
         {
           role: "assistant",
           content:
@@ -150,158 +122,123 @@ export default function AiChat({
     } finally {
       setLoading(false);
     }
-
-    function getGeneratedFile(
-  content: string
-) {
-  const fileMatch =
-    content.match(
-      /FILE:\s*(.+?)\n/i
-    );
-
-  const codeMatch =
-    content.match(
-      /```(?:\w+)?\n([\s\S]*?)```/
-    );
-
-  if (
-    !fileMatch ||
-    !codeMatch
-  ) {
-    return null;
-  }
-
-  return {
-    filename:
-      fileMatch[1].trim(),
-    content:
-      codeMatch[1].trim(),
-  };
-}
-
-function removeFileHeader(
-  content: string
-) {
-  return content.replace(
-    /FILE:\s*.+?\n/i,
-    ""
-  );
-}
   }
 
   return (
-    <div className="border rounded-2xl p-6 mt-8 bg-white shadow-sm">
+    <div className="mt-8 rounded-2xl border bg-white p-6 shadow-sm">
 
       <h2 className="text-2xl font-bold">
         🤖 AI Website Consultant
       </h2>
 
-      <p className="text-gray-500 mt-2 mb-6">
+      <p className="mt-2 mb-6 text-gray-500">
         Ask anything about SEO,
-        accessibility, performance,
+        accessibility,
+        performance,
         content or development.
       </p>
 
-    <QuickActions
-    actions={quickActions}
-    onAction={askAI}
-    />
+      <QuickActions
+        actions={quickActions}
+        onAction={askAI}
+      />
 
-      <div className="space-y-4 max-h-[500px] overflow-y-auto mb-6">
+      <div className="mb-6 max-h-[500px] space-y-4 overflow-y-auto">
 
-   {messages.map((message, index) => {
+        {messages.length === 0 &&
+          !loading && (
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
 
-  const generatedFile =
-    message.role === "assistant"
-      ? generatedFile(
-          message.content
-        )
-      : null;
+              <h3 className="mb-3 text-xl font-semibold">
+                👋 Welcome to your AI Website Consultant
+              </h3>
 
-  return (
-    <div
-      key={index}
-      className={`rounded-xl p-4 ${
-        message.role === "user"
-          ? "bg-blue-100 ml-8"
-          : "bg-gray-100 mr-8"
-      }`}
-    >
+              <p className="mb-6 text-gray-600">
+                I can analyse your audit,
+                explain technical issues,
+                improve SEO and generate
+                production-ready website
+                assets.
+              </p>
 
-      <p className="font-semibold mb-3">
-        {message.role === "user"
-          ? "You"
-          : "AI"}
-      </p>
+              <div className="grid gap-3 text-left sm:grid-cols-2">
 
-      {generatedFile && (
-        <AiFileDownload
-          filename={generatedFile.filename}
-          content={generatedFile.content}
-        />
-      )}
-
-      <ReactMarkdown
-        components={{
-          code({
-            className,
-            children,
-          }) {
-            const match =
-              /language-(\w+)/.exec(
-                className || ""
-              );
-
-            if (match) {
-              return (
-                <div className="relative">
-
-                  <button
-                    type="button"
-                    className="absolute top-2 right-2 rounded border bg-white px-2 py-1 text-xs"
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        String(children)
-                      )
-                    }
-                  >
-                    Copy
-                  </button>
-
-                  <SyntaxHighlighter
-                    language={match[1]}
-                    style={oneDark}
-                  >
-                    {String(children).replace(
-                      /\n$/,
-                      ""
-                    )}
-                  </SyntaxHighlighter>
-
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  🚀 Improve SEO
                 </div>
-              );
-            }
 
-            return (
-              <code className="rounded bg-gray-200 px-1">
-                {children}
-              </code>
-            );
-          },
-        }}
-      >
-        {generatedFile
-          ? removeFileHeader(
-              message.content
-            )
-          : message.content}
-      </ReactMarkdown>
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  📝 Write Meta Descriptions
+                </div>
 
-    </div>
-  );
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  🏷️ Generate Schema Markup
+                </div>
 
-})}
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  ⚡ Improve Core Web Vitals
+                </div>
 
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  📄 Generate metadata.ts
+                </div>
+
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  🤖 Build React & Next.js Components
+                </div>
+
+              </div>
+
+              <p className="mt-6 text-sm text-gray-500">
+                Or choose one of the quick
+                actions above to get started.
+              </p>
+
+            </div>
+          )}
+
+        {messages.map((message, index) => (
+          <AiMessage
+            key={index}
+            message={message}
+          />
+        ))}
+
+        {loading && (
+          <div className="rounded-xl bg-gray-100 p-4 animate-pulse">
+
+            <p className="font-semibold">
+              🤖 AI Consultant
+            </p>
+
+            <div className="mt-3 flex items-center gap-2">
+
+              <span className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" />
+
+              <span
+                className="h-2 w-2 rounded-full bg-gray-400 animate-bounce"
+                style={{
+                  animationDelay: "0.15s",
+                }}
+              />
+
+              <span
+                className="h-2 w-2 rounded-full bg-gray-400 animate-bounce"
+                style={{
+                  animationDelay: "0.3s",
+                }}
+              />
+
+            </div>
+
+            <p className="mt-3 text-sm italic text-gray-500">
+              Analysing your website...
+            </p>
+
+          </div>
+        )}
+
+      </div>
 
       <textarea
         rows={4}
@@ -326,14 +263,12 @@ function removeFileHeader(
 
       <button
         type="button"
-        onClick={() =>
-          askAI()
-        }
+        onClick={() => askAI()}
         disabled={
           loading ||
           !question.trim()
         }
-        className="mt-4 rounded-lg bg-black px-6 py-3 text-white disabled:opacity-50"
+        className="mt-4 rounded-lg bg-black px-6 py-3 text-white transition hover:bg-gray-800 disabled:opacity-50"
       >
         {loading
           ? "Thinking..."
