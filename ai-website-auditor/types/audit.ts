@@ -11,7 +11,7 @@ export interface AuditData {
   h1Count: number;
   h2Count: number;
 
-  screenshot: string;
+  screenshot: string | null;
 
   seoAnalysis: {
   score: number;

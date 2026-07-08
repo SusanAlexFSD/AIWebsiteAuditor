@@ -1,160 +1,109 @@
 import { chromium } from "playwright";
-import path from "path";
 
 export async function crawlWebsite(url: string) {
-  const browser = await chromium.launch({
-    headless: true,
-  });
+  let browser;
 
   try {
+    browser = await chromium.launch({
+      headless: true,
+    });
+
     const page = await browser.newPage({
-  userAgent:
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36",
-});
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36",
+    });
 
-try {
-  await page.goto(url, {
-    waitUntil: "load",
-    timeout: 30000,
-  });
+    try {
+      await page.goto(url, {
+        waitUntil: "load",
+        timeout: 30000,
+      });
 
-  await page.waitForTimeout(2000);
-} catch (error) {
-
- await page.goto(url, {
-  waitUntil: "load",
-  timeout: 30000,
-});
-
-await page.waitForTimeout(2000);
-
-
-      console.error("CRAWLER ERROR:", error);
+      await page.waitForTimeout(2000);
+    } catch (error) {
+      console.error("PAGE LOAD ERROR:", error);
 
       return {
         error: "Unable to access website",
-        details: String(error),
+        details:
+          error instanceof Error
+            ? error.message
+            : String(error),
       };
     }
 
     const title = await page.title();
-
     const pageUrl = page.url();
 
-    const metaDescription =
-      await page.evaluate(() => {
-        const meta =
-          document.querySelector(
-            'meta[name="description"]'
-          );
-
-        return (
-          meta?.getAttribute("content") ??
-          null
-        );
-      });
+    const metaDescription = await page.evaluate(() => {
+      return (
+        document
+          .querySelector('meta[name="description"]')
+          ?.getAttribute("content") ?? null
+      );
+    });
 
     const links = await page.evaluate(() => {
-      return Array.from(
-        document.querySelectorAll("a")
-      ).filter(
+      return Array.from(document.querySelectorAll("a")).filter(
         (link) =>
           link.href &&
           link.href.trim() !== "" &&
-          !link.href.startsWith(
-            "javascript:"
-          )
+          !link.href.startsWith("javascript:")
       ).length;
     });
 
-    const images =
-      await page.locator("img").count();
+    const images = await page.locator("img").count();
 
-    const missingAltTags =
-      await page.evaluate(() => {
-        return Array.from(
-          document.querySelectorAll("img")
-        ).filter((img) => {
-          const alt =
-            img.getAttribute("alt");
+    const missingAltTags = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll("img")).filter(
+        (img) => {
+          const alt = img.getAttribute("alt");
+          return !alt || alt.trim() === "";
+        }
+      ).length;
+    });
 
-          return (
-            !alt ||
-            alt.trim() === ""
-          );
-        }).length;
-      });
+    const h1Count = await page.locator("h1:visible").count();
+    const h2Count = await page.locator("h2:visible").count();
 
-    const h1Count =
-      await page
-        .locator("h1:visible")
-        .count();
+    const hasCanonical = await page.evaluate(() =>
+      !!document.querySelector('link[rel="canonical"]')
+    );
 
-    const h2Count =
-      await page
-        .locator("h2:visible")
-        .count();
+    const hasOgTitle = await page.evaluate(() =>
+      !!document.querySelector('meta[property="og:title"]')
+    );
 
-    const hasCanonical =
-      await page.evaluate(() => {
-        return !!document.querySelector(
-          'link[rel="canonical"]'
-        );
-      });
+    const hasOgDescription = await page.evaluate(() =>
+      !!document.querySelector(
+        'meta[property="og:description"]'
+      )
+    );
 
-    const hasOgTitle =
-      await page.evaluate(() => {
-        return !!document.querySelector(
-          'meta[property="og:title"]'
-        );
-      });
+    const hasOgImage = await page.evaluate(() =>
+      !!document.querySelector('meta[property="og:image"]')
+    );
 
-    const hasOgDescription =
-      await page.evaluate(() => {
-        return !!document.querySelector(
-          'meta[property="og:description"]'
-        );
-      });
+    const hasViewport = await page.evaluate(() =>
+      !!document.querySelector('meta[name="viewport"]')
+    );
 
-    const hasOgImage =
-      await page.evaluate(() => {
-        return !!document.querySelector(
-          'meta[property="og:image"]'
-        );
-      });
+    const hasSchema = await page.evaluate(() =>
+      !!document.querySelector(
+        'script[type="application/ld+json"]'
+      )
+    );
 
-    const hasViewport =
-      await page.evaluate(() => {
-        return !!document.querySelector(
-          'meta[name="viewport"]'
-        );
-      });
-
-    const hasSchema =
-      await page.evaluate(() => {
-        return !!document.querySelector(
-          'script[type="application/ld+json"]'
-        );
-      });
-
-    const usesHttps =
-      pageUrl.startsWith(
-        "https://"
-      );
+    const usesHttps = pageUrl.startsWith("https://");
 
     let hasRobots = false;
 
     try {
-      const robotsResponse =
-        await page.request.get(
-          new URL(
-            "/robots.txt",
-            pageUrl
-          ).href
-        );
+      const response = await page.request.get(
+        new URL("/robots.txt", pageUrl).href
+      );
 
-      hasRobots =
-        robotsResponse.ok();
+      hasRobots = response.ok();
     } catch {
       hasRobots = false;
     }
@@ -162,92 +111,18 @@ await page.waitForTimeout(2000);
     let hasSitemap = false;
 
     try {
-      const sitemapResponse =
-        await page.request.get(
-          new URL(
-            "/sitemap.xml",
-            pageUrl
-          ).href
-        );
+      const response = await page.request.get(
+        new URL("/sitemap.xml", pageUrl).href
+      );
 
-      hasSitemap =
-        sitemapResponse.ok();
+      hasSitemap = response.ok();
     } catch {
       hasSitemap = false;
     }
 
-    console.log("Title:", title);
-    console.log(
-      "Meta:",
-      metaDescription
-    );
-    console.log("Links:", links);
-    console.log("Images:", images);
-    console.log(
-      "Missing ALT Tags:",
-      missingAltTags
-    );
-    console.log("H1:", h1Count);
-    console.log("H2:", h2Count);
-
-    console.log(
-      "Canonical:",
-      hasCanonical
-    );
-
-    console.log(
-      "Open Graph Title:",
-      hasOgTitle
-    );
-
-    console.log(
-      "Open Graph Description:",
-      hasOgDescription
-    );
-
-    console.log(
-      "Open Graph Image:",
-      hasOgImage
-    );
-
-    console.log(
-      "Viewport:",
-      hasViewport
-    );
-
-    console.log(
-      "Schema:",
-      hasSchema
-    );
-
-    console.log(
-      "HTTPS:",
-      usesHttps
-    );
-
-    console.log(
-      "robots.txt:",
-      hasRobots
-    );
-
-    console.log(
-      "sitemap.xml:",
-      hasSitemap
-    );
-
-    const fileName = `${Date.now()}.png`;
-
-    const screenshotPath = path.join(
-      process.cwd(),
-      "public",
-      "audits",
-      fileName
-    );
-
-    await page.screenshot({
-      path: screenshotPath,
-      fullPage: true,
-    });
+    // Screenshots are disabled on Vercel because the filesystem is read-only.
+    // Replace this later with Cloudinary, Vercel Blob, or S3.
+    const screenshot = null;
 
     return {
       title,
@@ -272,9 +147,27 @@ await page.waitForTimeout(2000);
       hasRobots,
       hasSitemap,
 
-      screenshot: `/audits/${fileName}`,
+      screenshot,
+    };
+  } catch (error) {
+    console.error("CRAWLER ERROR:");
+
+    if (error instanceof Error) {
+      console.error(error.stack);
+    } else {
+      console.error(error);
+    }
+
+    return {
+      error: "Crawler failed",
+      details:
+        error instanceof Error
+          ? error.message
+          : String(error),
     };
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
   }
 }

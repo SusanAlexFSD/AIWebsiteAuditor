@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
+import { authOptions } from "@/lib/auth";
+
 import type { AuditData } from "@/types/audit";
 
 import { prisma } from "@/lib/prisma";
@@ -21,18 +23,23 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { url } = body;
 
-    const session = await getServerSession();
-
     let userId: string | null = null;
 
-    if (session?.user?.email) {
-      const user = await prisma.user.findUnique({
-        where: {
-          email: session.user.email,
-        },
-      });
+    // Allow audits to continue even if authentication is unavailable
+    try {
+      const session = await getServerSession(authOptions);
 
-      userId = user?.id ?? null;
+      if (session?.user?.email) {
+        const user = await prisma.user.findUnique({
+          where: {
+            email: session.user.email,
+          },
+        });
+
+        userId = user?.id ?? null;
+      }
+    } catch (error) {
+      console.error("SESSION ERROR:", error);
     }
 
     if (!url) {
@@ -55,7 +62,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const auditData = await crawlWebsite(url);
+   const auditData = {
+  title: "Test",
+  pageUrl: url,
+  metaDescription: "",
+  links: 0,
+  images: 0,
+  missingAltTags: 0,
+  h1Count: 1,
+  h2Count: 0,
+  hasCanonical: false,
+  hasOgTitle: false,
+  hasOgDescription: false,
+  hasOgImage: false,
+  hasViewport: true,
+  hasSchema: false,
+  usesHttps: true,
+  hasRobots: false,
+  hasSitemap: false,
+  screenshot: null,
+};
 
     if ("error" in auditData) {
       return NextResponse.json(
@@ -109,37 +135,43 @@ export async function POST(request: Request) {
       seoAnalysis.checks
     );
 
-    const auditResult: AuditData = {
-      ...auditData,
+const auditResult: AuditData = {
+  ...auditData,
 
-      seoAnalysis,
-      contentAnalysis,
-      technicalAnalysis,
-      accessibilityAnalysis,
+  seoAnalysis,
+  contentAnalysis,
+  technicalAnalysis,
+  accessibilityAnalysis,
 
-      overallScore,
+  overallScore,
 
-      recommendations,
+  recommendations,
 
-      aiRecommendations: "",
+  aiRecommendations: "",
 
-      hasCanonical: seoAnalysis.checks.hasCanonical,
-      hasOgTitle: seoAnalysis.checks.hasOgTitle,
-      hasOgDescription: seoAnalysis.checks.hasOgDescription,
-      hasOgImage: seoAnalysis.checks.hasOgImage,
-    };
+  hasCanonical: seoAnalysis.checks.hasCanonical,
+  hasOgTitle: seoAnalysis.checks.hasOgTitle,
+  hasOgDescription: seoAnalysis.checks.hasOgDescription,
+  hasOgImage: seoAnalysis.checks.hasOgImage,
+};
 
-    try {
-      auditResult.aiRecommendations =
-        await generateAiRecommendations(
-          auditResult
-        );
-    } catch (error) {
-      console.error("AI ERROR:", error);
+// Generate AI recommendations without crashing the audit
+try {
+  auditResult.aiRecommendations =
+    await generateAiRecommendations(auditResult);
+} catch (error) {
+  console.error("AI ERROR:");
 
-      auditResult.aiRecommendations =
-        "AI recommendations unavailable.";
-    }
+  if (error instanceof Error) {
+    console.error(error.message);
+    console.error(error.stack);
+  } else {
+    console.error(error);
+  }
+
+  auditResult.aiRecommendations =
+    "AI recommendations unavailable.";
+}
 
     if (userId) {
       await prisma.audit.create({
@@ -211,12 +243,29 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error("API ERROR:", error);
+    console.error("========== API ERROR ==========");
+
+    if (error instanceof Error) {
+      console.error(error.message);
+      console.error(error.stack);
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: error.message,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    console.error(error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "Audit failed",
+        message: "Unknown error",
       },
       {
         status: 500,
