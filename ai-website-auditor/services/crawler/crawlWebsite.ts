@@ -1,5 +1,6 @@
 import chromium from "@sparticuz/chromium";
-import puppeteer, { Browser } from "puppeteer-core";
+import puppeteer from "puppeteer-core";
+import type { Browser } from "puppeteer-core";
 
 export type CrawlSuccess = {
   title: string;
@@ -40,10 +41,12 @@ export async function crawlWebsite(
   let browser: Browser | null = null;
 
   try {
-    browser = await puppeteer.launch({
+   const executablePath = await chromium.executablePath();
+
+browser = await puppeteer.launch({
+  executablePath,
   args: chromium.args,
-  executablePath: await chromium.executablePath(),
-  headless: true,
+  headless: chromium.headless,
 });
 
     const page = await browser.newPage();
