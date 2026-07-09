@@ -2,10 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import type { Audit } from "@prisma/client";
+import { authOptions } from "@/lib/auth";
 
 export default async function HistoryPage() {
-  const session =
-    await getServerSession();
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
     redirect("/");
@@ -22,8 +23,8 @@ export default async function HistoryPage() {
     redirect("/");
   }
 
-  const audits =
-    await prisma.audit.findMany({
+  const audits: Audit[] =
+  await prisma.audit.findMany({
       where: {
         userId: user.id,
       },

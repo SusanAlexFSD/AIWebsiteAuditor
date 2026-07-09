@@ -17,6 +17,7 @@ import { analyseAccessibility } from "@/services/accessibility/analyseAccessibil
 import { calculateOverallScore } from "@/services/scoring/calculateOverallScore";
 import { generateRecommendations } from "@/services/seo/generateRecommendations";
 import { generateAiRecommendations } from "@/services/ai/generateAiRecommendations";
+import type { CrawlError } from "@/services/crawler/crawlWebsite";
 
 export async function POST(request: Request) {
   try {
@@ -62,37 +63,22 @@ export async function POST(request: Request) {
       );
     }
 
-   const auditData = {
-  title: "Test",
-  pageUrl: url,
-  metaDescription: "",
-  links: 0,
-  images: 0,
-  missingAltTags: 0,
-  h1Count: 1,
-  h2Count: 0,
-  hasCanonical: false,
-  hasOgTitle: false,
-  hasOgDescription: false,
-  hasOgImage: false,
-  hasViewport: true,
-  hasSchema: false,
-  usesHttps: true,
-  hasRobots: false,
-  hasSitemap: false,
-  screenshot: null,
-};
+    const auditData = await crawlWebsite(url);
 
-    if ("error" in auditData) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: auditData.error,
-          details: auditData.details,
-        },
-        { status: 400 }
-      );
+if ("error" in auditData) {
+  const crawlError = auditData as CrawlError;
+
+  return NextResponse.json(
+    {
+      success: false,
+      message: crawlError.error,
+      details: crawlError.details,
+    },
+    {
+      status: 400,
     }
+  );
+}
 
     const seoAnalysis = analyseSeo({
       title: auditData.title,

@@ -1,38 +1,73 @@
-import { chromium } from "playwright";
+import chromium from "@sparticuz/chromium";
+import puppeteer, { Browser } from "puppeteer-core";
 
-export async function crawlWebsite(url: string) {
-  let browser;
+export type CrawlSuccess = {
+  title: string;
+  pageUrl: string;
+  metaDescription: string | null;
+
+  links: number;
+  images: number;
+  missingAltTags: number;
+
+  h1Count: number;
+  h2Count: number;
+
+  hasCanonical: boolean;
+  hasOgTitle: boolean;
+  hasOgDescription: boolean;
+  hasOgImage: boolean;
+
+  hasViewport: boolean;
+  hasSchema: boolean;
+  usesHttps: boolean;
+  hasRobots: boolean;
+  hasSitemap: boolean;
+
+  screenshot: string;
+};
+
+export type CrawlError = {
+  error: string;
+  details: string;
+};
+
+export type CrawlResult = CrawlSuccess | CrawlError;
+
+export async function crawlWebsite(
+  url: string
+): Promise<CrawlResult> {
+  let browser: Browser | null = null;
 
   try {
-    browser = await chromium.launch({
-      headless: true,
+    browser = await puppeteer.launch({
+  args: chromium.args,
+  executablePath: await chromium.executablePath(),
+  headless: true,
+});
+
+    const page = await browser.newPage();
+
+await page.setViewport({
+  width: 1440,
+  height: 900,
+});
+
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
+    );
+
+    await page.goto(url, {
+      waitUntil: "networkidle2",
+      timeout: 30000,
     });
 
-    const page = await browser.newPage({
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36",
-    });
-
-    try {
-      await page.goto(url, {
-        waitUntil: "load",
-        timeout: 30000,
-      });
-
-      await page.waitForTimeout(2000);
-    } catch (error) {
-      console.error("PAGE LOAD ERROR:", error);
-
-      return {
-        error: "Unable to access website",
-        details:
-          error instanceof Error
-            ? error.message
-            : String(error),
-      };
-    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, 2000)
+    );
 
     const title = await page.title();
+
     const pageUrl = page.url();
 
     const metaDescription = await page.evaluate(() => {
@@ -43,67 +78,91 @@ export async function crawlWebsite(url: string) {
       );
     });
 
-    const links = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll("a")).filter(
-        (link) =>
+        const links = await page.evaluate(() => {
+      return Array.from(
+        document.querySelectorAll("a")
+      ).filter((link) => {
+        return (
           link.href &&
           link.href.trim() !== "" &&
           !link.href.startsWith("javascript:")
-      ).length;
+        );
+      }).length;
     });
 
-    const images = await page.locator("img").count();
+    const images = await page.$$eval(
+      "img",
+      (imgs) => imgs.length
+    );
 
     const missingAltTags = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll("img")).filter(
-        (img) => {
-          const alt = img.getAttribute("alt");
-          return !alt || alt.trim() === "";
-        }
-      ).length;
+      return Array.from(
+        document.querySelectorAll("img")
+      ).filter((img) => {
+        const alt = img.getAttribute("alt");
+        return !alt || alt.trim() === "";
+      }).length;
     });
 
-    const h1Count = await page.locator("h1:visible").count();
-    const h2Count = await page.locator("h2:visible").count();
-
-    const hasCanonical = await page.evaluate(() =>
-      !!document.querySelector('link[rel="canonical"]')
+    const h1Count = await page.$$eval(
+      "h1",
+      (elements) => elements.length
     );
 
-    const hasOgTitle = await page.evaluate(() =>
-      !!document.querySelector('meta[property="og:title"]')
+    const h2Count = await page.$$eval(
+      "h2",
+      (elements) => elements.length
     );
 
-    const hasOgDescription = await page.evaluate(() =>
-      !!document.querySelector(
+    const hasCanonical = await page.evaluate(() => {
+      return !!document.querySelector(
+        'link[rel="canonical"]'
+      );
+    });
+
+    const hasOgTitle = await page.evaluate(() => {
+      return !!document.querySelector(
+        'meta[property="og:title"]'
+      );
+    });
+
+    const hasOgDescription = await page.evaluate(() => {
+      return !!document.querySelector(
         'meta[property="og:description"]'
-      )
-    );
+      );
+    });
 
-    const hasOgImage = await page.evaluate(() =>
-      !!document.querySelector('meta[property="og:image"]')
-    );
+    const hasOgImage = await page.evaluate(() => {
+      return !!document.querySelector(
+        'meta[property="og:image"]'
+      );
+    });
 
-    const hasViewport = await page.evaluate(() =>
-      !!document.querySelector('meta[name="viewport"]')
-    );
+    const hasViewport = await page.evaluate(() => {
+      return !!document.querySelector(
+        'meta[name="viewport"]'
+      );
+    });
 
-    const hasSchema = await page.evaluate(() =>
-      !!document.querySelector(
+    const hasSchema = await page.evaluate(() => {
+      return !!document.querySelector(
         'script[type="application/ld+json"]'
-      )
-    );
+      );
+    });
 
     const usesHttps = pageUrl.startsWith("https://");
 
-    let hasRobots = false;
+        let hasRobots = false;
 
     try {
-      const response = await page.request.get(
-        new URL("/robots.txt", pageUrl).href
+      const response = await fetch(
+        new URL("/robots.txt", pageUrl).href,
+        {
+          method: "GET",
+        }
       );
 
-      hasRobots = response.ok();
+      hasRobots = response.ok;
     } catch {
       hasRobots = false;
     }
@@ -111,18 +170,17 @@ export async function crawlWebsite(url: string) {
     let hasSitemap = false;
 
     try {
-      const response = await page.request.get(
-        new URL("/sitemap.xml", pageUrl).href
+      const response = await fetch(
+        new URL("/sitemap.xml", pageUrl).href,
+        {
+          method: "GET",
+        }
       );
 
-      hasSitemap = response.ok();
+      hasSitemap = response.ok;
     } catch {
       hasSitemap = false;
     }
-
-    // Screenshots are disabled on Vercel because the filesystem is read-only.
-    // Replace this later with Cloudinary, Vercel Blob, or S3.
-    const screenshot = null;
 
     return {
       title,
@@ -147,23 +205,28 @@ export async function crawlWebsite(url: string) {
       hasRobots,
       hasSitemap,
 
-      screenshot,
+      // Placeholder until screenshots are added
+      screenshot: "",
     };
-  } catch (error) {
-    console.error("CRAWLER ERROR:");
+
+      } catch (error) {
+    console.error("========== CRAWLER ERROR ==========");
 
     if (error instanceof Error) {
+      console.error(error.message);
       console.error(error.stack);
-    } else {
-      console.error(error);
+
+      return {
+        error: "Crawler failed",
+        details: error.message,
+      };
     }
+
+    console.error(error);
 
     return {
       error: "Crawler failed",
-      details:
-        error instanceof Error
-          ? error.message
-          : String(error),
+      details: "Unknown crawler error",
     };
   } finally {
     if (browser) {
