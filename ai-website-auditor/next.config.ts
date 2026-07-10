@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
     "@sparticuz/chromium",
     "puppeteer-core",
   ],
+
+  outputFileTracingIncludes: {
+    "/api/audit": [
+      "./node_modules/@sparticuz/chromium/**/*",
+    ],
+  },
 };
 
 export default nextConfig;
