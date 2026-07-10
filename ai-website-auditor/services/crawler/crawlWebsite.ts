@@ -46,7 +46,7 @@ export async function crawlWebsite(
 browser = await puppeteer.launch({
   executablePath,
   args: chromium.args,
-  headless: chromium.headless,
+  headless: true,
 });
 
     const page = await browser.newPage();
