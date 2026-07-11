@@ -8,7 +8,6 @@ import type { AuditData } from "@/types/audit";
 import { prisma } from "@/lib/prisma";
 import { validateUrl } from "@/lib/validateUrl";
 
-import { crawlWebsite } from "@/services/crawler/crawlWebsite";
 import { analyseSeo } from "@/services/seo/analyseSeo";
 import { analyseContent } from "@/services/content/analyseContent";
 import { analyseTechnical } from "@/services/technical/analyseTechnical";
@@ -17,7 +16,7 @@ import { analyseAccessibility } from "@/services/accessibility/analyseAccessibil
 import { calculateOverallScore } from "@/services/scoring/calculateOverallScore";
 import { generateRecommendations } from "@/services/seo/generateRecommendations";
 import { generateAiRecommendations } from "@/services/ai/generateAiRecommendations";
-import type { CrawlError } from "@/services/crawler/crawlWebsite";
+
 
 export async function POST(request: Request) {
   try {
@@ -63,22 +62,33 @@ export async function POST(request: Request) {
       );
     }
 
-    const auditData = await crawlWebsite(url);
+const response = await fetch(
+  `${process.env.CRAWLER_API_URL}/audit`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ url }),
+  }
+);
 
-if ("error" in auditData) {
-  const crawlError = auditData as CrawlError;
+const crawler = await response.json();
 
+if (!crawler.success) {
   return NextResponse.json(
     {
       success: false,
-      message: crawlError.error,
-      details: crawlError.details,
+      message: crawler.message,
+      details: crawler.details,
     },
     {
       status: 400,
     }
   );
 }
+
+const auditData = crawler.data;
 
     const seoAnalysis = analyseSeo({
       title: auditData.title,
