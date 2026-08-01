@@ -48,12 +48,17 @@ export default function AppHeader() {
 
           <div className="flex items-center gap-4">
 
-            {!session && (
-              <div className="hidden text-right text-sm text-gray-500 lg:block">
-                <p>Run audits for free.</p>
-                <p>Sign in to save your audit history.</p>
-              </div>
-            )}
+           {!session && (
+            <div className="hidden text-right text-sm lg:block">
+              <p className="font-medium text-green-600">
+                🟢 Guest Mode
+              </p>
+
+              <p className="text-gray-500">
+                Audits won't be saved.
+              </p>
+            </div>
+          )}
 
             {session ? (
               <>
