@@ -237,25 +237,29 @@ This reflects the project's focus on combining automated website auditing with A
 
 Screenshots can be added here to showcase the application's main interfaces.
 
+## 📸 Screenshots
+
+Screenshots of the application showing the main interfaces and audit functionality.
+
 ### Dashboard
 
-![Dashboard](./docs/screenshots/Auditor1.png)
+![Dashboard](./ai-website-auditor/docs/screenshots/Auditor1.png)
 
 ### Audit Interface
 
-![Audit Interface](./docs/screenshots/Auditor2.png)
+![Audit Interface](./ai-website-auditor/docs/screenshots/Auditor2.png)
 
 ### Audit Results
 
-![Audit Results](./docs/screenshots/Auditor3.png)
+![Audit Results](./ai-website-auditor/docs/screenshots/Auditor3.png)
 
 ### Detailed Audit
 
-![Detailed Audit](./docs/screenshots/Auditor4.png)
+![Detailed Audit](./ai-website-auditor/docs/screenshots/Auditor4.png)
 
 ### AI Audit
 
-![AI Audit](./docs/screenshots/Auditor5.png)
+![AI Audit](./ai-website-auditor/docs/screenshots/Auditor5.png)
 ---
 
 ## 💻 Local Development
