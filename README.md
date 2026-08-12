@@ -243,24 +243,19 @@ Screenshots can be added here to showcase the application's main interfaces.
 
 ### Audit Interface
 
-![AI Website Auditor](./docs/screenshots/Auditor3.png)
-
-### Audit Results
-
-![Audit Results](./docs/screenshots/Auditor2.png)
+![Audit Interface](./docs/screenshots/Auditor2.png)
 
 ### Audit Results
 
 ![Audit Results](./docs/screenshots/Auditor3.png)
 
-### Audit Results
+### Detailed Audit
 
-![Audit Results](./docs/screenshots/Auditor4.png)
+![Detailed Audit](./docs/screenshots/Auditor4.png)
 
 ### AI Audit
 
-![Audit Results](./docs/screenshots/Auditor5.png)
-
+![AI Audit](./docs/screenshots/Auditor5.png)
 ---
 
 ## 💻 Local Development
