@@ -4,7 +4,7 @@ import type {
   CrawlResult,
   CrawlSuccess,
   CrawlError,
-} from "./types";
+} from "./types.js";
 
 export async function crawlWebsite(
   url: string
@@ -176,6 +176,13 @@ export async function crawlWebsite(
       hasSitemap = false;
     }
 
+const screenshotBytes = await page.screenshot({
+  type: "png",
+  fullPage: true,
+});
+
+const screenshot = `data:image/png;base64,${Buffer.from(screenshotBytes).toString("base64")}`;
+
     const result: CrawlSuccess = {
       title,
       pageUrl,
@@ -199,7 +206,7 @@ export async function crawlWebsite(
       hasRobots,
       hasSitemap,
 
-      screenshot: "",
+      screenshot,
     };
 
     return result;
