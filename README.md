@@ -239,7 +239,7 @@ Screenshots can be added here to showcase the application's main interfaces.
 
 ### Dashboard
 
-![Dashboard](./docs/screenshots/dashboardAuditor1.png)
+![Dashboard](./docs/screenshots/Auditor1.png)
 
 ### Audit Interface
 
